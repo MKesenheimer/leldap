@@ -99,7 +99,7 @@ def enum(args, url_str, header_json, data_json, proxy, method, form="json"):
 
 def extractKeyword(string):
   keyword = ""
-  tags = ["[l,L]ogin", "[u,U]sername", "[u,U]ser"]
+  tags = ["[l,L]ogin", "[u,U]sername", "[u,U]ser", "Authorization"]
   #string = string.replace("'", "\"")
   keyword = ""
   for t in tags:
@@ -139,7 +139,10 @@ def calculateInsertionPoint(args, url_json, header_json, data_json):
     key = extractKeyword(header_str)
     if key != "":
       print("[*] Inserting injection point into header '{}'".format(key))
-      header_json[key] = args.insertionTag
+      if key == "Authorization":
+        header_json[key] = "Bearer " + args.insertionTag
+      else:
+        header_json[key] = args.insertionTag
     else:
       print("[*] Searching post data for possible insertion points.")
       key = extractKeyword(data_str) 
@@ -166,7 +169,7 @@ def main():
 
   parser = argparse.ArgumentParser(description="Test a login page for LDAP injection.")
   parser.add_argument('-r', '--req', dest='requestFile', type=str, required=True, help="Request file. For example copied from Burp.")  
-  parser.add_argument('-t', '--tag', dest="insertionTag", type=str, default='*', help="Insertion point. Default *. Marks the spot for LDAP insertion.")
+  parser.add_argument('-t', '--tag', dest="insertionTag", type=str, default='<>', help="Insertion point. Default *. Marks the spot for LDAP insertion.")
   parser.add_argument('--protocol', dest='protocol', type=str, default='https', help="The protocol to user: https or http. Default https.")
   parser.add_argument('--proxy', dest='proxy', type=str, default='', help="Use a proxy to connect to the target URL. Example: --proxy 127.0.0.1:8080")
   parser.add_argument('--encode', dest='encode', action='store_true', help="Base64-encode the payload.")
