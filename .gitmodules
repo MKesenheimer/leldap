@@ -1,0 +1,3 @@
+[submodule "Burpee"]
+	path = Burpee
+	url = https://github.com/xscorp/Burpee.git
