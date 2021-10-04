@@ -124,6 +124,8 @@ def enum(args, url_str, header_json, data_json, proxy, method, form="json"):
         sys.stdout.write(f"\r{attribute}: {value}{char}")
 
         # TODO: implement smart trigger
+        # first, send the request without modification
+        # compare the following responses with the first request.
         if "Cannot login" in r.text and not ("not valid" in r.text or "Malformed" in r.text):
           value += str(char)
           break
@@ -136,7 +138,7 @@ def enum(args, url_str, header_json, data_json, proxy, method, form="json"):
 
 def extractKeyword(string):
   keyword = ""
-  tags = ["[l,L]ogin", "[u,U]sername", "[u,U]ser", "Authorization"]
+  tags = ["[l,L]ogin", "[u,U]sername", "[u,U]ser", "Authorization", "[p,P]assword", "[p,P]ass", "pwd"]
   #string = string.replace("'", "\"")
   keyword = ""
   for t in tags:
@@ -170,7 +172,7 @@ def calculateInsertionPoint(args, url_json, header_json, data_json):
   header_str = json.dumps(header_json)
   url_str = json.dumps(url_json)
   if args.insertionTag not in url_str and args.insertionTag not in data_str and args.insertionTag not in header_str:
-    print("[*] Insertion tag '*' not found in request. Searching for keywords 'login', 'username' and 'user'.")
+    print("[*] Insertion tag '*' not found in request. Searching for special keywords.")
    
     print("[*] Searching header for possible insertion points.") 
     key = extractKeyword(header_str)
