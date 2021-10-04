@@ -192,8 +192,6 @@ def main():
 
   # extract get parameters (if any) from url
   method, resource_name = Burpee.burpee.get_method_and_resource(args.requestFile)
-  if args.method != '':
-    method = args.method
   url_parsed = urlparse(resource_name)
   url_str = args.protocol + "://" + header_json["Host"] + url_parsed.path
   url_json = parse_qs(url_parsed.query)
@@ -207,6 +205,10 @@ def main():
   url_json, header_json, data_json = calculateInsertionPoint(args, url_json, header_json, data_json)
   if method == "GET":
     data_json = url_json
+
+  # overwrite HTTP method if given
+  if args.method != '':
+    method = args.method
 
   # set up the proxy
   if args.proxy != '':
