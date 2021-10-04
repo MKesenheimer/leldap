@@ -139,19 +139,19 @@ def calculateInsertionPoint(args, url_json, header_json, data_json):
     key = extractKeyword(header_str)
     if key != "":
       print("[*] Inserting injection point into header '{}'".format(key))
-      header_json[key] = '*'
+      header_json[key] = args.insertionTag
     else:
       print("[*] Searching post data for possible insertion points.")
       key = extractKeyword(data_str) 
       if key != "":
         print("[*] Inserting injection point into data parameter '{}'".format(key))
-        data_json[key] = '*'
+        data_json[key] = args.insertionTag
       else:
         print("[*] Searching url for possible insertion points.")
         key = extractKeyword(url_str) 
         if key != "":
           print("[*] Inserting injection point into url parameter '{}'".format(key))
-          url_json[key] = '*'
+          url_json[key] = args.insertionTag
         else:
           print("[*] No injection points inserted.")
           print("[*] Aborting.")

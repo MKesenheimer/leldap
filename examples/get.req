@@ -1,0 +1,11 @@
+GET /login?username=test&password=pass HTTP/1.1
+Host: 127.0.0.1:8000
+User-Agent: leldap-scanner v0.1
+Cache-Control: no-cache
+Accept: */*
+Authorization: Bearer YoDvUetTD48FXHwImXmXwfBrmQ6Lmd
+Accept-Encoding: gzip, deflate
+Accept-Language: en-US,en;q=0.9
+Connection: close
+
+
