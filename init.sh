@@ -14,9 +14,11 @@ git remote add origin git@ptmk.sy.gs:remotes/leldap.git
 git remote set-url --add --push origin git@ptmk.sy.gs:remotes/leldap.git
 
 # add and push to root
-#git commit -am "Commit message"
+#git add ...
+#git commit -m "Commit message"
 #git push origin master
 
 # add and push to all
-#git commit -am "Commit message"
-#git push origin all
+#git add ...
+#git commit -m "Commit message"
+#git push all master
