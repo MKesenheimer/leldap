@@ -12,6 +12,7 @@ git remote set-url --add --push all git@ptmk.sy.gs:remotes/leldap.git
 # remote: origin
 git remote add origin git@ptmk.sy.gs:remotes/leldap.git
 git remote set-url --add --push origin git@ptmk.sy.gs:remotes/leldap.git
+git branch --set-upstream-to=origin/master master
 
 # add and push to root
 #git add ...
