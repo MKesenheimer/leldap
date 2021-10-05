@@ -230,7 +230,7 @@ def main():
   parser.add_argument('-t', '--tag', dest="insertionTag", type=str, default='<>', help="Insertion point. Default *. Marks the spot for LDAP insertion.")
   parser.add_argument('--protocol', dest='protocol', type=str, default='https', help="The protocol to user: https or http. Default https.")
   parser.add_argument('--proxy', dest='proxy', type=str, default='', help="Use a proxy to connect to the target URL. Example: --proxy 127.0.0.1:8080")
-  parser.add_argument('--encode', dest='encode', type=str, default='base64', help="Encode the payload: base64, url")
+  parser.add_argument('--encode', dest='encode', type=str, default='', help="Encode the payload: base64, url")
   parser.add_argument('--module', dest='module', type=str, default='enum', help="The module to use: login, enum, dump (TODO)")
   parser.add_argument('--method', dest='method', type=str, default='', help="Force using a given HTTP method.")
   parser.add_argument('--loglevel', dest='loglevel', default='WARNING', help="DEBUG, INFO, WARNING, ERROR")
