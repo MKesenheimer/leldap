@@ -1,3 +1,4 @@
 *.req
 *.swp
 __pycache__
+examples/burp

@@ -14,6 +14,11 @@ import re
 import urllib3
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
+# TODO:
+# - Blind injections
+# - new module "information dump"
+# - Avoid brute-force bans with timer
+# - smart trigger
 
 def send(args, url_str, header_json, data_json, proxy, method, form="json"):
   r = None
@@ -203,8 +208,22 @@ def calculateInsertionPoint(args, url_json, header_json, data_json):
 
 
 
-def main():
-  # TODO: Splash screen
+def main():                                                       
+  print("@@@       @@@@@@@@  @@@       @@@@@@@    @@@@@@   @@@@@@@  ") 
+  print("@@@       @@@@@@@@  @@@       @@@@@@@@  @@@@@@@@  @@@@@@@@ ") 
+  print("@@!       @@!       @@!       @@!  @@@  @@!  @@@  @@!  @@@ ") 
+  print("!@!       !@!       !@!       !@!  @!@  !@!  @!@  !@!  @!@ ") 
+  print("@!!       @!!!:!    @!!       @!@  !@!  @!@!@!@!  @!@@!@!  ") 
+  print("!!!       !!!!!:    !!!       !@!  !!!  !!!@!!!!  !!@!!!   ") 
+  print("!!:       !!:       !!:       !!:  !!!  !!:  !!!  !!:      ") 
+  print(" :!:      :!:        :!:      :!:  !:!  :!:  !:!  :!:      ") 
+  print(" :: ::::   :: ::::   :: ::::   :::: ::  ::   :::   ::      ") 
+  print(": :: : :  : :: ::   : :: : :  :: :  :    :   : :   :       ")
+  print()
+  print("leldap v0.1 - low effort ldap injection scanner.")
+  print("By Matthias Kesenheimer, 2021.")
+  print()
+                                                           
 
   parser = argparse.ArgumentParser(description="Test a login page for LDAP injection.")
   parser.add_argument('-r', '--req', dest='requestFile', type=str, required=True, help="Request file. For example copied from Burp.")  
