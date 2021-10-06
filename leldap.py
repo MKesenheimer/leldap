@@ -37,6 +37,14 @@ def send(args, url_str, header_json, data_json, proxy, method, form="json"):
   return r
 
 
+def inject(args, data_json, payload):
+  try:
+    temp = json.dumps(data_json).replace(args.insertionTag, payload)
+    data_json = json.loads(temp)
+  except:
+    print("\n[-] Warning: Payload processing failed in query {}".format(payload))
+  return data_json
+
 def login(args, url_str, header_json, data_json, proxy, method, form="json"):
   """ 
   url_str: string 
@@ -58,19 +66,8 @@ def login(args, url_str, header_json, data_json, proxy, method, form="json"):
 
       logging.debug("payload: {}".format(query))
 
-      data_json_t = data_json
-      try:
-        data_str = json.dumps(data_json).replace(args.insertionTag, query)
-        data_json_t = json.loads(data_str)
-      except:
-        print("\n[-] Warning: Payload processing failed in query {}".format(query))
-      
-      header_json_t = header_json
-      try:
-        header_str = json.dumps(header_json).replace(args.insertionTag, query)
-        header_json_t = json.loads(header_str)
-      except:
-        print("\n[-] Warning: Payload processing failed in query {}".format(query))
+      data_json_t = inject(args, data_json, query)
+      header_json_t = inject(args, header_json, query)
 
       # prepare and send the request
       r = send(args, url_str, header_json_t, data_json_t, proxy, method, form)
@@ -110,19 +107,8 @@ def enum(args, url_str, header_json, data_json, proxy, method, form="json"):
 
         logging.debug("payload: {}".format(query))
 
-        data_json_t = data_json
-        try:
-          data_str = json.dumps(data_json).replace(args.insertionTag, query)
-          data_json_t = json.loads(data_str)
-        except:
-          print("\n[-] Warning: Payload processing failed in query {}".format(query))
-
-        header_json_t = header_json
-        try:
-          header_str = json.dumps(header_json).replace(args.insertionTag, query)
-          header_json_t = json.loads(header_str)
-        except:
-          print("\n[-] Warning: Payload processing failed in query {}".format(query))
+        data_json_t = inject(args, data_json, query)
+        header_json_t = inject(args, header_json, query)
 
         # prepare and send the request
         r = send(args, url_str, header_json_t, data_json_t, proxy, method, form)
