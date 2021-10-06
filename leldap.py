@@ -45,6 +45,7 @@ def inject(args, data_json, payload):
     print("\n[-] Warning: Payload processing failed in query {}".format(payload))
   return data_json
 
+
 def login(args, url_str, header_json, data_json, proxy, method, form="json"):
   """ 
   url_str: string 
