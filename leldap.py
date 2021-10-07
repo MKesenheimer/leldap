@@ -91,7 +91,7 @@ def brute(args, url_str, header_json, data_json, proxy, method, form="json"):
       except:
         clength = 0
       cclength = clength - len(query)
-      print("\t\t\t\t\t -> status {}, content-length {:6}, corrected content-length {:6}\r{}".format(r.status_code, clength, cclength, line.replace("\n", "")))
+      print("\t\t\t\t\t -> status {}, content-length {:6}, corrected content-length {:6}\r{}".format(r.status_code, clength, cclength, query))
 
       # TODO: implement smart trigger
 
