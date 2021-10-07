@@ -13,7 +13,17 @@ import json
 import re
 import copy
 import urllib3
+from sty import fg, Style, RgbFg
+
+# disable TLS warnings
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
+
+# custom color definitions
+fg.orange = Style(RgbFg(255, 150, 50))
+
+# common
+__version__ = 0.1
+__author__ = 'Matthias Kesenheimer'
 
 # TODO:
 # - Blind injections
@@ -31,7 +41,7 @@ def send(args, url_str, header_json, data_json, proxy, method, form="json"):
   elif method == "GET":
       r = requests.get(url_str, headers=header_json, params=data_json, proxies=proxy, verify=False)
   else:
-    print("[-] Error: method {} not implemented. Try with GET or POST.".format(method))
+    print(fg.li_red + "[-] Error: method {} not implemented. Try with GET or POST.".format(method) + fg.rs, flush=True)
     exit(-1)
 
   #sleep(0.5) #Avoid brute-force bans
@@ -170,7 +180,7 @@ def calculateInsertionPoint(args, url_str, getparams_json, header_json, data_jso
   data_str = json.dumps(data_json)
   header_str = json.dumps(header_json)
   getparams_str = json.dumps(getparams_json)
-  if args.insertionTag not in url_str and args.InsertionTag not in getparams_str and args.insertionTag not in data_str and args.insertionTag not in header_str:
+  if args.insertionTag not in url_str and args.insertionTag not in getparams_str and args.insertionTag not in data_str and args.insertionTag not in header_str:
     print("[*] Insertion tag {} not found in request. Searching for special keywords.".format(args.insertionTag))
    
     print("[*] Searching header for possible insertion points.") 
@@ -195,13 +205,14 @@ def calculateInsertionPoint(args, url_str, getparams_json, header_json, data_jso
           getparams_json[key] = args.insertionTag
         else:
           print("[*] No injection points inserted.")
-          print("[*] Aborting.")
+          print(fg.orange + "[*] Aborting." + fg.rs, flush = true)
           exit(0)
   return (getparams_json, header_json, data_json)
 
 
 
-def main():                                                       
+def main():
+  print(fg.white)                                                    
   print("@@@       @@@@@@@@  @@@       @@@@@@@    @@@@@@   @@@@@@@  ") 
   print("@@@       @@@@@@@@  @@@       @@@@@@@@  @@@@@@@@  @@@@@@@@ ") 
   print("@@!       @@!       @@!       @@!  @@@  @@!  @@@  @@!  @@@ ") 
@@ -213,9 +224,9 @@ def main():
   print(" :: ::::   :: ::::   :: ::::   :::: ::  ::   :::   ::      ") 
   print(": :: : :  : :: ::   : :: : :  :: :  :    :   : :   :       ")
   print()
-  print("leldap v0.1 - low effort ldap injection scanner.")
-  print("By Matthias Kesenheimer, 2021.")
-  print()
+  print("leldap v{} - low effort ldap injection scanner.".format(__version__))
+  print("By {}, 2021.".format(__author__))
+  print(fg.rs, flush=True)
                                                            
 
   parser = argparse.ArgumentParser(description="Test a LDAP injections.")
@@ -266,7 +277,7 @@ def main():
 
   # set up the proxy
   if args.proxy != '':
-    proxy = { "http" : "http://" + args.proxy, "https" : "http://" + args.proxy }
+    proxy = { "http" : args.proxy, "https" : args.proxy }
   else:
     proxy = {}
   logging.debug("Using proxy {}".format(proxy))
