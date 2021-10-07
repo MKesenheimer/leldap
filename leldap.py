@@ -70,12 +70,18 @@ def brute(args, url_str, header_json, data_json, proxy, method, form="json"):
 
       logging.debug("payload: {}".format(query))
 
+      url_str_t = url_str.replace(args.insertionTag, query)
       data_json_t = inject(args, data_json, query)
       header_json_t = inject(args, header_json, query)
 
       # prepare and send the request
-      r = send(args, url_str, header_json_t, data_json_t, proxy, method, form)
-      print("\t\t\t\t\t -> status {}, content-length {}\r{}".format(r.status_code, r.headers['content-length'], line.replace("\n", "")))
+      r = send(args, url_str_t, header_json_t, data_json_t, proxy, method, form)
+      try:
+        clength = int(r.headers['content-length'])
+      except:
+        clength = 0
+      cclength = clength - len(query)
+      print("\t\t\t\t\t -> status {}, content-length {:6}, corrected content-length {:6}\r{}".format(r.status_code, clength, cclength, line.replace("\n", "")))
 
       # TODO: implement smart trigger
 
@@ -109,11 +115,12 @@ def enum(args, url_str, header_json, data_json, proxy, method, form="json"):
 
         logging.debug("payload: {}".format(query))
 
+        url_str_t = url_str.replace(args.insertionTag, query)
         data_json_t = inject(args, data_json, query)
         header_json_t = inject(args, header_json, query)
 
         # prepare and send the request
-        r = send(args, url_str, header_json_t, data_json_t, proxy, method, form)
+        r = send(args, url_str_t, header_json_t, data_json_t, proxy, method, form)
         sys.stdout.write(f"\r{attribute}: {value}{char}")
 
         # TODO: implement smart trigger
@@ -154,16 +161,16 @@ def extractKeyword(string):
 
 
 
-def calculateInsertionPoint(args, url_json, header_json, data_json):
+def calculateInsertionPoint(args, url_str, getparams_json, header_json, data_json):
   """ 
-  All arguments in json format
+  All arguments except url_str in json format
   """
 
   print("[*] Calculating insertion point.")
   data_str = json.dumps(data_json)
   header_str = json.dumps(header_json)
-  url_str = json.dumps(url_json)
-  if args.insertionTag not in url_str and args.insertionTag not in data_str and args.insertionTag not in header_str:
+  getparams_str = json.dumps(getparams_json)
+  if args.insertionTag not in url_str and args.InsertionTag not in getparams_str and args.insertionTag not in data_str and args.insertionTag not in header_str:
     print("[*] Insertion tag {} not found in request. Searching for special keywords.".format(args.insertionTag))
    
     print("[*] Searching header for possible insertion points.") 
@@ -181,17 +188,16 @@ def calculateInsertionPoint(args, url_json, header_json, data_json):
         print("[*] Inserting injection point into data parameter '{}'".format(key))
         data_json[key] = args.insertionTag
       else:
-        print("[*] Searching url for possible insertion points.")
-        key = extractKeyword(url_str) 
+        print("[*] Searching get parameter for possible insertion points.")
+        key = extractKeyword(getparams_str) 
         if key != "":
-          print("[*] Inserting injection point into url parameter '{}'".format(key))
-          url_json[key] = args.insertionTag
+          print("[*] Inserting injection point into get parameter '{}'".format(key))
+          getparams_json[key] = args.insertionTag
         else:
           print("[*] No injection points inserted.")
           print("[*] Aborting.")
           exit(0)
-
-  return (url_json, header_json, data_json)
+  return (getparams_json, header_json, data_json)
 
 
 
@@ -242,17 +248,17 @@ def main():
   method, resource_name = Burpee.burpee.get_method_and_resource(args.requestFile)
   url_parsed = urlparse(resource_name)
   url_str = args.protocol + "://" + header_json["Host"] + url_parsed.path
-  url_json = parse_qs(url_parsed.query)
+  getparams_json = parse_qs(url_parsed.query)
 
   # logging
   logging.info("Extracted headers: {}".format(header_json))
   logging.info("Extracted post data: {}".format(data_json))
-  logging.info("Extracted url parameter: {}".format(url_json))
+  logging.info("Extracted url parameter: {}".format(getparams_json))
 
   # calculate the ldap injection insertion point
-  url_json, header_json, data_json = calculateInsertionPoint(args, url_json, header_json, data_json)
+  getparams_json, header_json, data_json = calculateInsertionPoint(args, url_str, getparams_json, header_json, data_json)
   if method == "GET":
-    data_json = url_json
+    data_json = getparams_json
 
   # overwrite HTTP method if given
   if args.method != '':
