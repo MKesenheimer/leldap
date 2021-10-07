@@ -27,6 +27,6 @@ Encode the payload:
 Test leldap on the vulnerable web app `ldap-ctf`:
 ```
 ./examples/ldap-ctf/start.sh
- ./leldap.py -r examples/ldap-ctf.req --proxy 127.0.0.1:8080 --module login --protocol http 
+ ./leldap.py -r examples/ldap-ctf.req --proxy 127.0.0.1:8080 --module brute --protocol http 
 ```
 
