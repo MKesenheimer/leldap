@@ -75,7 +75,7 @@ def brute(args, url_str, header_json, data_json, proxy, method, form="json"):
       elif args.encode == "url":
         query = quote_plus(query)
       else:
-        # workaround: escaping " with \"
+        # workaround: escaping '"' with '\"'
         query = query.replace("\"", "\\\"")
 
       logging.debug("payload: {}".format(query))
