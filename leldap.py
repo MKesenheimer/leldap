@@ -50,6 +50,11 @@ def send(args, url_str, header_json, data_json, proxy, method, form="json"):
 
 
 def inject(args, data, payload):
+  """
+  data: json
+  payload: string
+  """
+
   data_t = copy.deepcopy(data)
   for key in data:
     if isinstance(data[key], list):
@@ -284,6 +289,16 @@ def main():
   getparams_json, header_json, data_json = calculateInsertionPoint(args, url_str, getparams_json, header_json, data_json)
   if method == "GET":
     data_json = getparams_json
+  else:
+    # maintain the url for POST requests
+    params = ""
+    for key in getparams_json:
+      for value in getparams_json[key]:
+        if params == "":
+          params += "?" + key + "=" + value
+        else:
+          params += "&" + key + "=" + value
+    url_str += params
 
   # overwrite HTTP method if given
   if args.method != '':
